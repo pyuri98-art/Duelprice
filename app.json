@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "DuelPrice",
+    "slug": "duelprice",
+    "scheme": "duelprice",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.duelprice.app"
+    },
+    "web": {
+      "name": "DuelPrice"
+    }
+  }
+}
