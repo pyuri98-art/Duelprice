@@ -1,0 +1,22 @@
+{
+  "source": "Cardmarket official singles catalogue and price guide, snapshot 2026-11-13",
+  "verifiedMappings": [
+    {
+      "ygoprodeckCode": "CT05-EN001",
+      "cardName": "Stardust Dragon",
+      "set": "Collector's Tins 2008",
+      "rarity": "Secret Rare",
+      "cardmarketProductId": 244199,
+      "cardmarketExpansionId": 1222,
+      "cardmarketUrl": "https://www.cardmarket.com/en/YuGiOh/Products/Singles/Collectors-Tins-2008/Stardust-Dragon",
+      "evidence": "Exact match of trend 18.29, avg7 17.86, avg30 15.70 between user screenshot of product page and Cardmarket price guide for idProduct 244199",
+      "priceGuideDate": "2026-11-13T02:44:22+0100",
+      "prices": {
+        "low": 0.6,
+        "trend": 18.29,
+        "avg7": 17.86,
+        "avg30": 15.7
+      }
+    }
+  ]
+}
