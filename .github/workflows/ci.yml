@@ -34,5 +34,7 @@ jobs:
           node --check scripts/refresh-cardmarket.mjs
           node --check scripts/review-cardmarket.mjs
           node --check scripts/match-cardmarket.mjs
+          node --check scripts/preview-ygoprodeck-prints.mjs
+          node --check scripts/preview-combined-review.mjs
       - name: Build production app
         run: npm run build
