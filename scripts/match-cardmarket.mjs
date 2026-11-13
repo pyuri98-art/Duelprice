@@ -26,11 +26,13 @@ for (const p of cards) {
 }
 const queries = JSON.parse(readFileSync(new URL('../data/cardmarket-targets.json', import.meta.url), 'utf8'));
 const output = queries.map(q => {
-  const matches = (byName.get(normalize(q.name)) ?? []).filter(p =>
-    normalize(p.expansionName) === normalize(q.expansion));
+  const sameName = byName.get(normalize(q.name)) ?? [];
+  // The official singles export includes idExpansion, but no expansionName,
+  // printing code or rarity. Keep all same-name candidates for manual verification.
+  const matches = sameName.filter(p => !p.expansionName || normalize(p.expansionName) === normalize(q.expansion));
   return { ...q, status: matches.length === 1 ? 'candidate-review' : matches.length ? 'ambiguous' : 'not-found',
     candidates: matches.map(p => ({
-      idProduct: p.idProduct, name: p.name, expansionName: p.expansionName,
+      idProduct: p.idProduct, idExpansion: p.idExpansion ?? null, name: p.name, expansionName: p.expansionName ?? null,
       number: p.number ?? null, rarity: p.rarity ?? null,
       // Prices belong to a Cardmarket product ID, not necessarily a YGOPRODeck print code.
       avg: prices.get(String(p.idProduct))?.avg ?? null,
