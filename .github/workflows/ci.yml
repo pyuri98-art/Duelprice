@@ -1,0 +1,39 @@
+name: DuelPrice CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: duelprice-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build web app
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate JavaScript scripts
+        run: |
+          node --check scripts/build-cardmarket-review.mjs
+          node --check scripts/refresh-cardmarket.mjs
+          node --check scripts/review-cardmarket.mjs
+          node --check scripts/match-cardmarket.mjs
+      - name: Build production app
+        run: npm run build
