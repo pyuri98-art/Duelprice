@@ -21,13 +21,16 @@ function App() {
         if (res.status === 400) { setRemote([]); return; }
         if (!res.ok) throw new Error('API non disponibile');
         const json = await res.json();
-        if (!controller.signal.aborted) setRemote((json.data || []).slice(0, 80).map(c => ({id:String(c.id),name:c.name,italianName:'',set:c.card_sets?.[0]?.set_name || '—',code:c.card_sets?.[0]?.set_code || '—',rarity:c.card_sets?.[0]?.set_rarity || '—',type:c.type || '—',attribute:c.attribute || '—',image:c.card_images?.[0]?.image_url_small || imageFor(c.id),price:null})));
+        if (!controller.signal.aborted) setRemote((json.data || []).slice(0, 80).map(c => ({id:String(c.id),name:c.name,italianName:'',set:c.card_sets?.[0]?.set_name || '—',code:c.card_sets?.[0]?.set_code || '—',rarity:c.card_sets?.[0]?.set_rarity || '—',prints:(c.card_sets||[]).map(p=>({code:p.set_code,name:p.set_name,rarity:p.set_rarity})),description:c.desc||'',type:c.type || '—',attribute:c.attribute || '—',image:c.card_images?.[0]?.image_url_small || imageFor(c.id),price:null})));
       } catch (e) { if (!controller.signal.aborted) {setError('Catalogo non raggiungibile. Riprova.'); setRemote([]);} }
       finally {if (!controller.signal.aborted) setLoading(false);}
     }, 450);
     return () => {clearTimeout(timer); controller.abort();};
   }, [query]);
   const [selected, setSelected] = React.useState(null);
+  const [printIndex,setPrintIndex] = React.useState(0);
+  const [language,setLanguage] = React.useState('IT');
+  const [condition,setCondition] = React.useState('Near Mint');
   const [favorites, setFavorites] = React.useState(() => {
     try { return JSON.parse(localStorage.getItem('duelprice-favorites') || '[]'); } catch { return []; }
   });
@@ -39,17 +42,20 @@ function App() {
     localStorage.setItem('duelprice-favorites', JSON.stringify(next));
     return next;
   });
+  const detailCard = (remote === null ? cards : remote).find(c=>c.id===selected);
+  const prints = detailCard?.prints?.length ? detailCard.prints : detailCard ? [{code:detailCard.code,name:detailCard.set,rarity:detailCard.rarity}] : [];
+  const chosenPrint = prints[Math.min(printIndex,prints.length-1)];
   return <div className="app">
     <header><div className="brand"><span className="bolt">⚡</span><span>Duel<span className="gold">Price</span></span></div><p>Trova le tue carte Yu-Gi-Oh!</p></header>
-    <main>
+    <main>{detailCard ? <section className="detailpage"><button className="back" onClick={()=>setSelected(null)}>← Torna alla ricerca</button><div className="detailhero"><img src={detailCard.image || imageFor(detailCard.id)} alt={detailCard.name}/><div><h1>{detailCard.name}</h1><p>{detailCard.type}</p><p>{detailCard.attribute}</p></div></div><h2>Seleziona la stampa</h2><label className="field">Espansione / stampa<select value={Math.min(printIndex,prints.length-1)} onChange={e=>setPrintIndex(Number(e.target.value))}>{prints.map((p,i)=><option key={i} value={i}>{p.code} · {p.name} · {p.rarity}</option>)}</select></label><div className="printdata"><b>Codice:</b> {chosenPrint?.code}<br/><b>Set:</b> {chosenPrint?.name}<br/><b>Rarità:</b> {chosenPrint?.rarity}</div><div className="twofields"><label className="field">Lingua<select value={language} onChange={e=>setLanguage(e.target.value)}>{[['IT','Italiano'],['EN','Inglese'],['DE','Tedesco'],['FR','Francese'],['ES','Spagnolo'],['PT','Portoghese']].map(([v,t])=><option key={v} value={v}>{t}</option>)}</select></label><label className="field">Condizioni<select value={condition} onChange={e=>setCondition(e.target.value)}>{['Mint','Near Mint','Excellent','Good','Light Played','Played','Poor'].map(v=><option key={v}>{v}</option>)}</select></label></div><div className="pricepanel"><h2>Confronto prezzi</h2><div>Cardmarket <strong>Non collegato</strong></div><div>TCGplayer <strong>Non collegato</strong></div><small>Nessuna quotazione live disponibile. Lingua e condizioni sono filtri preparatori.</small></div>{detailCard.description&&<div className="description"><h2>Descrizione</h2><p>{detailCard.description}</p></div>}</section> : <>
       <div className="notice">CATALOGO ONLINE · Prezzi reali non ancora disponibili</div>
       <label className="searchbox"><span aria-hidden="true">⌕</span><input aria-label="Cerca carte" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Cerca nome, set, codice o rarità..." /></label>
       <p className="hint">Cerca per nome inglese (almeno 3 caratteri) per interrogare il catalogo online.</p><div className="toolbar"><span>{filtered.length} {filtered.length === 1 ? 'carta trovata' : 'carte trovate'}</span><button className={onlyFavorites?'filter active':'filter'} onClick={()=>setOnlyFavorites(v=>!v)} aria-pressed={onlyFavorites}>♥ Preferiti ({favorites.length})</button></div>
       {loading && <p className="hint" role="status">Caricamento carte...</p>}{error && <p className="hint" role="alert">{error}</p>}<section className="cards" aria-label="Risultati di ricerca">{filtered.length === 0 ? <p className="empty">Nessuna carta trovata. Prova un altro termine.</p> : filtered.map(c=><article className="card" key={c.id}>
         <div className="cardhead"><img className="cardimage" src={c.image || imageFor(c.id)} alt={`Carta ${c.name}`} loading="lazy" onError={e=>{e.currentTarget.style.visibility='hidden'}}/><div className="info"><h2>{c.name}</h2><div className="italian">{c.italianName}</div><div className="meta">{c.code} · {c.rarity}</div></div><div className="right"><strong className="price">{c.price == null ? 'Prezzo non disponibile' : euro(c.price)}</strong><button className={favorites.includes(c.id)?'heart saved':'heart'} aria-label={favorites.includes(c.id)?'Rimuovi dai preferiti':'Aggiungi ai preferiti'} aria-pressed={favorites.includes(c.id)} onClick={()=>toggleFavorite(c.id)}>♥</button></div></div>
         {selected===c.id && <div className="details"><div><b>Set:</b> {c.set}</div><div><b>Tipo:</b> {c.type}</div><div><b>Attributo:</b> {c.attribute}</div><small>Prezzo dimostrativo · Nessun negozio collegato</small></div>}
-        <button className="expand" aria-expanded={selected===c.id} onClick={()=>setSelected(selected===c.id?null:c.id)}>{selected===c.id?'Nascondi dettagli ▲':'Mostra dettagli ▼'}</button>
-      </article>)}</section>
+        <button className="expand" aria-expanded={selected===c.id} onClick={()=>{setSelected(c.id);setPrintIndex(0);window.scrollTo(0,0)}}>Apri scheda carta →</button>
+      </article>)}</section></>}
     </main><footer>DuelPrice · Dati carte: YGOPRODeck · Prezzi demo o non disponibili</footer>
   </div>;
 }
